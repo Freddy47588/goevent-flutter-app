@@ -4,6 +4,9 @@ import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 
+// PENTING: sesuaikan path ini dengan struktur kamu
+import '../search/search_page.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -16,7 +19,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedCat = 0;
   int _bottomIndex = 0;
 
-  // ====== Controller untuk slider Popular Now ======
+  // Carousel controller (Popular Now)
   final PageController _popularCtrl = PageController(viewportFraction: 0.78);
 
   final List<_CategoryItem> _cats = const [
@@ -27,7 +30,7 @@ class _HomePageState extends State<HomePage> {
     _CategoryItem('Art', Icons.brush),
   ];
 
-  // NOTE: pakai placeholder gradient dulu (tanpa gambar asset) biar langsung jalan.
+  // Dummy data
   final List<_UpcomingEvent> _upcoming = const [
     _UpcomingEvent('Satellite mega festival - 2023', 'New York'),
     _UpcomingEvent('Party with friends at night - 2023', 'California'),
@@ -69,6 +72,69 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final pages = <Widget>[
+      _HomeTab(
+        searchC: _searchC,
+        selectedCat: _selectedCat,
+        onCatChanged: (i) => setState(() => _selectedCat = i),
+        onTapSearch: () => setState(() => _bottomIndex = 1),
+        popularCtrl: _popularCtrl,
+        cats: _cats,
+        upcoming: _upcoming,
+        popular: _popular,
+        recommend: _recommend,
+      ),
+      const SearchPage(),
+      const _PlaceholderPage(title: 'Favorite'),
+      const _PlaceholderPage(title: 'Ticket'),
+      const _PlaceholderPage(title: 'Profile'),
+    ];
+
+    return Scaffold(
+      // Bottom nav
+      bottomNavigationBar: _GoEventBottomBar(
+        currentIndex: _bottomIndex,
+        onChanged: (i) => setState(() => _bottomIndex = i),
+      ),
+
+      body: SafeArea(
+        child: IndexedStack(index: _bottomIndex, children: pages),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// HOME TAB (konten home saja)
+// ============================================================================
+
+class _HomeTab extends StatelessWidget {
+  final TextEditingController searchC;
+  final int selectedCat;
+  final ValueChanged<int> onCatChanged;
+  final VoidCallback onTapSearch;
+
+  final PageController popularCtrl;
+
+  final List<_CategoryItem> cats;
+  final List<_UpcomingEvent> upcoming;
+  final List<_PopularEvent> popular;
+  final List<_RecommendEvent> recommend;
+
+  const _HomeTab({
+    required this.searchC,
+    required this.selectedCat,
+    required this.onCatChanged,
+    required this.onTapSearch,
+    required this.popularCtrl,
+    required this.cats,
+    required this.upcoming,
+    required this.popular,
+    required this.recommend,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bg = isDark ? Colors.black : Colors.white;
@@ -84,248 +150,238 @@ class _HomePageState extends State<HomePage> {
 
     final brand = isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
 
-    return Scaffold(
-      backgroundColor: bg,
-
-      // ===== Bottom Nav (5 icon) =====
-      bottomNavigationBar: _GoEventBottomBar(
-        currentIndex: _bottomIndex,
-        onChanged: (i) => setState(() => _bottomIndex = i),
-      ),
-
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.md,
-            AppSpacing.md,
-            110, // space untuk bottom bar
-          ),
-          children: [
-            // =========================
-            // Location + Bell
-            // =========================
-            Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Location',
-                      style: AppTextStyles.caption.copyWith(
-                        color: textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
+    return Container(
+      color: bg,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          110, // space bottom bar
+        ),
+        children: [
+          // =========================
+          // Location + Bell
+          // =========================
+          Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Location',
+                    style: AppTextStyles.caption.copyWith(
+                      color: textSecondary,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: 6),
-                    Row(
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.place, size: 18, color: brand),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Ahmedabad, Gujarat',
+                        style: AppTextStyles.body.copyWith(
+                          color: textPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const Spacer(),
+              _CircleIconButton(icon: Icons.notifications_none, onTap: () {}),
+            ],
+          ),
+
+          const SizedBox(height: AppSpacing.md),
+
+          // =========================
+          // Search + Filter (tap search -> pindah tab Search)
+          // =========================
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: searchC,
+                  readOnly: true,
+                  onTap: onTapSearch,
+                  decoration: InputDecoration(
+                    hintText: 'Search',
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: isDark
+                        ? AppColors.darkSurface
+                        : const Color(0xFFF7F7F7),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: BorderSide(color: border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: BorderSide(color: brand, width: 1.4),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: brand,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+                child: IconButton(
+                  onPressed: () {},
+                  icon: const Icon(Icons.tune, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: AppSpacing.md),
+
+          // =========================
+          // Category chips
+          // =========================
+          SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: cats.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, i) {
+                final selected = i == selectedCat;
+
+                return InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () => onCatChanged(i),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: selected ? brand : surface,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: border),
+                    ),
+                    child: Row(
                       children: [
-                        Icon(Icons.place, size: 18, color: brand),
-                        const SizedBox(width: 6),
+                        Icon(
+                          cats[i].icon,
+                          size: 18,
+                          color: selected ? Colors.white : textSecondary,
+                        ),
+                        const SizedBox(width: 8),
                         Text(
-                          'Ahmedabad, Gujarat',
+                          cats[i].label,
                           style: AppTextStyles.body.copyWith(
-                            color: textPrimary,
+                            color: selected ? Colors.white : textPrimary,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-                const Spacer(),
-                _CircleIconButton(icon: Icons.notifications_none, onTap: () {}),
-              ],
-            ),
-
-            const SizedBox(height: AppSpacing.md),
-
-            // =========================
-            // Search + Filter
-            // =========================
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchC,
-                    decoration: InputDecoration(
-                      hintText: 'Search',
-                      prefixIcon: const Icon(Icons.search),
-                      filled: true,
-                      fillColor: isDark
-                          ? AppColors.darkSurface
-                          : const Color(0xFFF7F7F7),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        borderSide: BorderSide(color: border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        borderSide: BorderSide(color: brand, width: 1.4),
-                      ),
-                    ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: brand,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                  ),
-                  child: IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.tune, color: Colors.white),
-                  ),
-                ),
-              ],
+                );
+              },
             ),
+          ),
 
-            const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.lg),
 
-            // =========================
-            // Category chips (horizontal)
-            // =========================
-            SizedBox(
-              height: 40,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                itemCount: _cats.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (context, i) {
-                  final selected = i == _selectedCat;
-
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(999),
-                    onTap: () => setState(() => _selectedCat = i),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: selected ? brand : surface,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: border),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _cats[i].icon,
-                            size: 18,
-                            color: selected ? Colors.white : textSecondary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _cats[i].label,
-                            style: AppTextStyles.body.copyWith(
-                              color: selected ? Colors.white : textPrimary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // =========================
-            // Upcoming Events (SWIPE)
-            // =========================
-            _SectionHeader(title: 'Upcoming Events', onSeeAll: () {}),
-            const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              height: 120,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                itemCount: _upcoming.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(width: AppSpacing.md),
-                itemBuilder: (context, i) {
-                  return _UpcomingCard(
-                    event: _upcoming[i],
-                    brand: brand,
-                    border: border,
-                    surface: surface,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    isDark: isDark,
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // =========================
-            // Popular Now (SLIDE LEFT-RIGHT)
-            // =========================
-            _SectionHeader(title: 'Popular Now', onSeeAll: () {}),
-            const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              height: 260,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                itemCount: _popular.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(width: AppSpacing.md),
-                itemBuilder: (context, i) {
-                  return SizedBox(
-                    width: 260, // <- ukuran card, bisa kamu adjust
-                    child: _PopularCard(
-                      event: _popular[i],
-                      brand: brand,
-                      border: border,
-                      surface: surface,
-                      textPrimary: textPrimary,
-                      textSecondary: textSecondary,
-                      isDark: isDark,
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // =========================
-            // Recommendations list
-            // =========================
-            _SectionHeader(title: 'Recommendations for you', onSeeAll: () {}),
-            const SizedBox(height: AppSpacing.sm),
-            ..._recommend.map(
-              (e) => Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: _RecommendTile(
-                  event: e,
+          // =========================
+          // Upcoming Events (scroll horizontal)
+          // =========================
+          _SectionHeader(title: 'Upcoming Events', onSeeAll: () {}),
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            height: 120,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: upcoming.length,
+              separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
+              itemBuilder: (context, i) {
+                return _UpcomingCard(
+                  event: upcoming[i],
                   brand: brand,
                   border: border,
                   surface: surface,
                   textPrimary: textPrimary,
                   textSecondary: textSecondary,
                   isDark: isDark,
-                ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: AppSpacing.lg),
+
+          // =========================
+          // Popular Now (CAROUSEL swipe kiri-kanan)
+          // =========================
+          _SectionHeader(title: 'Popular Now', onSeeAll: () {}),
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            height: 260,
+            child: PageView.builder(
+              controller: popularCtrl,
+              itemCount: popular.length,
+              physics: const BouncingScrollPhysics(),
+              itemBuilder: (context, i) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.md),
+                  child: _PopularCard(
+                    event: popular[i],
+                    brand: brand,
+                    border: border,
+                    surface: surface,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    isDark: isDark,
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: AppSpacing.lg),
+
+          // =========================
+          // Recommendations list
+          // =========================
+          _SectionHeader(title: 'Recommendations for you', onSeeAll: () {}),
+          const SizedBox(height: AppSpacing.sm),
+          ...recommend.map(
+            (e) => Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: _RecommendTile(
+                event: e,
+                brand: brand,
+                border: border,
+                surface: surface,
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                isDark: isDark,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// =========================
-// Small components
-// =========================
+// ============================================================================
+// UI components
+// ============================================================================
 
 class _CircleIconButton extends StatelessWidget {
   final IconData icon;
@@ -396,9 +452,9 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// =========================
+// ============================================================================
 // Cards
-// =========================
+// ============================================================================
 
 class _UpcomingCard extends StatelessWidget {
   final _UpcomingEvent event;
@@ -423,7 +479,7 @@ class _UpcomingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 290,
-      height: 118, // ✅ naikkan sedikit biar aman
+      height: 118,
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
         color: surface,
@@ -443,8 +499,6 @@ class _UpcomingCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-
-          // ✅ Ganti jadi Expanded + Column rapih, TANPA Spacer
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -476,7 +530,6 @@ class _UpcomingCard extends StatelessWidget {
                     ),
                   ],
                 ),
-
                 Align(
                   alignment: Alignment.bottomRight,
                   child: SizedBox(
@@ -540,7 +593,6 @@ class _PopularCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // image header
           Stack(
             children: [
               Container(
@@ -738,6 +790,10 @@ class _RecommendTile extends StatelessWidget {
   }
 }
 
+// ============================================================================
+// Bottom bar
+// ============================================================================
+
 class _GoEventBottomBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onChanged;
@@ -769,7 +825,7 @@ class _GoEventBottomBar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        height: 74, // ✅ biar tebal & sesuai UI kit
+        height: 74,
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
@@ -800,7 +856,6 @@ class _GoEventBottomBar extends StatelessWidget {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // ✅ indikator aktif (dot kecil di bawah icon)
                     Positioned(
                       bottom: 8,
                       child: AnimatedContainer(
@@ -813,8 +868,6 @@ class _GoEventBottomBar extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    // icon
                     Icon(items[i], size: 26, color: selected ? brand : idle),
                   ],
                 ),
@@ -827,9 +880,32 @@ class _GoEventBottomBar extends StatelessWidget {
   }
 }
 
-// =========================
-// Dummy data classes
-// =========================
+// ============================================================================
+// Dummy data + placeholder
+// ============================================================================
+
+class _PlaceholderPage extends StatelessWidget {
+  final String title;
+  const _PlaceholderPage({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+
+    return Center(
+      child: Text(
+        '$title (dummy)',
+        style: AppTextStyles.h3.copyWith(
+          color: textPrimary,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
 
 class _CategoryItem {
   final String label;
@@ -848,6 +924,7 @@ class _PopularEvent {
   final String title;
   final String time;
   final String price;
+
   const _PopularEvent({
     required this.chip,
     required this.title,

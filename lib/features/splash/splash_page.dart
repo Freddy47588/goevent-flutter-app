@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -17,7 +18,15 @@ class _SplashPageState extends State<SplashPage> {
     super.initState();
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      } else {
+        Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+        // kalau kamu mau langsung login, ganti ke:
+        // Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
     });
   }
 
@@ -26,16 +35,12 @@ class _SplashPageState extends State<SplashPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.darkBackground
-          : Colors.white, // 👈 LIGHT = PUTIH
+      backgroundColor: isDark ? AppColors.darkBackground : Colors.white,
       body: Container(
         width: double.infinity,
         decoration: isDark
-            ? const BoxDecoration(
-                gradient: AppColors.darkGradient, // 🌙 dark mode
-              )
-            : null, // 🌞 light mode tanpa gradient
+            ? const BoxDecoration(gradient: AppColors.darkGradient)
+            : null,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -43,7 +48,6 @@ class _SplashPageState extends State<SplashPage> {
               'assets/images/logo_splash.png',
               width: 120,
               height: 120,
-              fit: BoxFit.contain,
             ),
             const SizedBox(height: AppSpacing.md),
             Text(

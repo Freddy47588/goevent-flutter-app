@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "659796885543",
+    "project_id": "imposing-carver-476010-k3",
+    "storage_bucket": "imposing-carver-476010-k3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:659796885543:android:12f0088b8321b81ba54e02",
+        "android_client_info": {
+          "package_name": "com.goeventapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5u40FuoCNtHCX46Uosn9upOI1TQX-LnQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

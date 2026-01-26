@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:goevent_app/routes/app_routes.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -14,15 +16,57 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _userC = TextEditingController();
+  final _userC = TextEditingController(); // dipakai sebagai EMAIL
   final _passC = TextEditingController();
   bool _obscure = true;
+  bool _loading = false;
 
   @override
   void dispose() {
     _userC.dispose();
     _passC.dispose();
     super.dispose();
+  }
+
+  Future<void> _doLogin() async {
+    final email = _userC.text.trim();
+    final pass = _passC.text;
+
+    if (email.isEmpty || pass.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Email & password wajib diisi.")),
+      );
+      return;
+    }
+
+    setState(() => _loading = true);
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: pass,
+      );
+
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (_) => false);
+    } on FirebaseAuthException catch (e) {
+      final msg = switch (e.code) {
+        'user-not-found' => 'Akun tidak ditemukan.',
+        'wrong-password' => 'Password salah.',
+        'invalid-email' => 'Format email tidak valid.',
+        'too-many-requests' => 'Terlalu banyak percobaan. Coba lagi nanti.',
+        _ => e.message ?? 'Login gagal.',
+      };
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Login gagal: $e")));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -39,6 +83,32 @@ class _LoginPageState extends State<LoginPage> {
     final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
     final fillColor = isDark ? AppColors.darkSurface : Colors.white;
 
+    InputDecoration fieldStyle({
+      required String hint,
+      required IconData icon,
+      Widget? suffix,
+    }) {
+      return InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        suffixIcon: suffix,
+        filled: true,
+        fillColor: fillColor,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: BorderSide(color: borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: BorderSide(color: textPrimary.withOpacity(0.6)),
+        ),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -48,9 +118,6 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               const SizedBox(height: AppSpacing.lg),
 
-              // =========================
-              // LOGO + APP NAME (HEADER)
-              // =========================
               Image.asset(
                 'assets/images/logo_splash.png',
                 width: 80,
@@ -62,275 +129,88 @@ class _LoginPageState extends State<LoginPage> {
                 'GoEvent',
                 style: AppTextStyles.h2.copyWith(
                   color: isDark ? Colors.white : textPrimary,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
-                ),
-              ),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // =========================
-              // WELCOME TEXT (TEMPLATE STYLE)
-              // =========================
-              Align(
-                alignment: Alignment.center,
-                child: Text(
-                  'Welcome Back!',
-                  style: AppTextStyles.h2.copyWith(
-                    color: textPrimary,
-                    fontWeight: FontWeight.w800,
-                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Gunakan akun untuk masuk',
+                'Login untuk melanjutkan',
                 style: AppTextStyles.body.copyWith(color: textSecondary),
-                textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.lg),
 
-              // =========================
-              // USERNAME FIELD
-              // =========================
               TextField(
                 controller: _userC,
-                decoration: InputDecoration(
-                  hintText: 'Enter Username',
-                  prefixIcon: const Icon(Icons.person_outline),
-                  filled: true,
-                  fillColor: fillColor,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    borderSide: BorderSide(color: borderColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    borderSide: BorderSide(
-                      color: isDark
-                          ? AppColors.darkPrimary
-                          : AppColors.lightPrimary,
-                      width: 1.4,
+                keyboardType: TextInputType.emailAddress,
+                decoration: fieldStyle(
+                  hint: 'Email',
+                  icon: Icons.email_outlined,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              TextField(
+                controller: _passC,
+                obscureText: _obscure,
+                decoration: fieldStyle(
+                  hint: 'Password',
+                  icon: Icons.lock_outline,
+                  suffix: IconButton(
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                    icon: Icon(
+                      _obscure ? Icons.visibility : Icons.visibility_off,
                     ),
                   ),
                 ),
+              ),
+
+              const SizedBox(height: AppSpacing.sm),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _loading
+                      ? null
+                      : () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.forgotPassword,
+                        ),
+                  child: const Text('Lupa password?'),
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.sm),
+
+              GradientButton(
+                text: _loading ? 'Loading...' : 'Login',
+                onPressed: _loading ? null : _doLogin,
               ),
 
               const SizedBox(height: AppSpacing.md),
 
-              // =========================
-              // PASSWORD FIELD
-              // =========================
-              TextField(
-                controller: _passC,
-                obscureText: _obscure,
-                decoration: InputDecoration(
-                  hintText: 'Enter Password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  filled: true,
-                  fillColor: fillColor,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    borderSide: BorderSide(color: borderColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    borderSide: BorderSide(
-                      color: isDark
-                          ? AppColors.darkPrimary
-                          : AppColors.lightPrimary,
-                      width: 1.4,
-                    ),
-                  ),
-                  suffixIcon: IconButton(
-                    onPressed: () => setState(() => _obscure = !_obscure),
-                    icon: Icon(
-                      _obscure ? Icons.visibility_off : Icons.visibility,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: AppSpacing.sm),
-
-              // =========================
-              // FORGOT PASSWORD (RIGHT)
-              // =========================
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, AppRoutes.forgotPassword);
-                  },
-
-                  child: Text(
-                    'Forgot Password ?',
-                    style: AppTextStyles.body.copyWith(
-                      color: isDark
-                          ? AppColors.darkPrimary
-                          : AppColors.lightPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: AppSpacing.sm),
-
-              // =========================
-              // LOGIN BUTTON
-              // =========================
-              GradientButton(
-                text: 'Login',
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, AppRoutes.home);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Login (dummy)')),
-                  );
-                },
-              ),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // =========================
-              // OR DIVIDER
-              // =========================
-              Row(
-                children: [
-                  Expanded(child: Divider(color: borderColor)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Text(
-                      'Or',
-                      style: AppTextStyles.body.copyWith(color: textSecondary),
-                    ),
-                  ),
-                  Expanded(child: Divider(color: borderColor)),
-                ],
-              ),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // =========================
-              // SOCIAL LOGIN: FACEBOOK
-              // =========================
-              _SocialLoginButton(
-                text: 'Login with Facebook',
-                icon: const Icon(Icons.facebook, color: Color(0xFF1877F2)),
-                onPressed: () {
-                  // TODO: Facebook login
-                },
-              ),
-
-              const SizedBox(height: AppSpacing.sm),
-
-              // =========================
-              // SOCIAL LOGIN: GOOGLE
-              // =========================
-              _SocialLoginButton(
-                text: 'Login with Google',
-                icon: Image.asset(
-                  'assets/icons/google.png',
-                  width: 22,
-                  height: 22,
-                ),
-                onPressed: () {
-                  // TODO: Google login
-                },
-              ),
-
-              const SizedBox(height: AppSpacing.xl),
-
-              // =========================
-              // SIGNUP LINK
-              // =========================
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Don’t have an account? ",
+                    'Belum punya akun? ',
                     style: AppTextStyles.body.copyWith(color: textSecondary),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacementNamed(context, AppRoutes.signup);
-                    },
+                    onTap: _loading
+                        ? null
+                        : () => Navigator.pushNamed(context, AppRoutes.signup),
                     child: Text(
-                      "Signup",
-
+                      'Daftar',
                       style: AppTextStyles.body.copyWith(
-                        color: isDark
-                            ? AppColors.darkPrimary
-                            : AppColors.lightPrimary,
-                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : textPrimary,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                 ],
               ),
-
-              const SizedBox(height: AppSpacing.md),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SocialLoginButton extends StatelessWidget {
-  final String text;
-  final Widget icon;
-  final VoidCallback onPressed;
-
-  const _SocialLoginButton({
-    required this.text,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final fillColor = isDark ? AppColors.darkSurface : Colors.white;
-    final textColor = isDark
-        ? AppColors.darkTextPrimary
-        : AppColors.lightTextPrimary;
-
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 52),
-        backgroundColor: fillColor,
-        side: BorderSide(color: borderColor),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-      ),
-      onPressed: onPressed,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          icon,
-          const SizedBox(width: 10),
-          Text(
-            text,
-            style: AppTextStyles.body.copyWith(
-              color: textColor,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
       ),
     );
   }
