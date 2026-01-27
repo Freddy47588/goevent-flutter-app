@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.goevent_app"
+    namespace = "com.goeventapp.dev"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-    applicationId = "com.goeventapp"
+    applicationId = "com.goeventapp.dev"
     minSdk = flutter.minSdkVersion
     targetSdk = flutter.targetSdkVersion
     versionCode = flutter.versionCode

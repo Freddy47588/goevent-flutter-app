@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:goevent_app/core/services/auth_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -16,18 +18,32 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
+    _boot();
+  }
 
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
-      } else {
-        Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
-        // kalau kamu mau langsung login, ganti ke:
-        // Navigator.pushReplacementNamed(context, AppRoutes.login);
-      }
-    });
+  Future<void> _boot() async {
+    // delay splash
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+
+    // belum login
+    if (user == null) {
+      Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+      // kalau mau langsung login:
+      // Navigator.pushReplacementNamed(context, AppRoutes.login);
+      return;
+    }
+
+    // sudah login -> cek profile complete
+    final complete = await AuthService().isProfileComplete(user.uid);
+    if (!mounted) return;
+
+    Navigator.pushReplacementNamed(
+      context,
+      complete ? AppRoutes.home : AppRoutes.createUsername,
+    );
   }
 
   @override

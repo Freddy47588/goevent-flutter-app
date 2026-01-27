@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:goevent_app/routes/app_routes.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -41,13 +42,44 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _loading = true);
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: pass,
       );
 
+      final uid = cred.user!.uid;
+
+      // ✅ cek / buat doc user
+      final users = FirebaseFirestore.instance.collection('users');
+      final docRef = users.doc(uid);
+      final snap = await docRef.get();
+
+      bool complete = false;
+
+      if (!snap.exists) {
+        // user lama yang belum punya dokumen profile
+        await docRef.set({
+          'uid': uid,
+          'email': cred.user!.email,
+          'name': cred.user!.displayName,
+          'photoUrl': cred.user!.photoURL,
+          'favourites': <String>[],
+          'isProfileComplete': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        complete = false;
+      } else {
+        complete = (snap.data()?['isProfileComplete'] == true);
+      }
+
       if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (_) => false);
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        complete ? AppRoutes.home : AppRoutes.createUsername,
+        (_) => false,
+      );
     } on FirebaseAuthException catch (e) {
       final msg = switch (e.code) {
         'user-not-found' => 'Akun tidak ditemukan.',
@@ -117,7 +149,6 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: AppSpacing.lg),
-
               Image.asset(
                 'assets/images/logo_splash.png',
                 width: 80,

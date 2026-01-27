@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/widgets/gradient_button.dart';
 import '../../routes/app_routes.dart';
+import '../../../core/utils/notification_helper.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -68,8 +71,27 @@ class _SignupPageState extends State<SignupPage> {
       // opsional: set displayName
       await cred.user?.updateDisplayName(name);
 
+      // ✅ Buat dokumen user (profil belum complete)
+      final uid = cred.user!.uid;
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'uid': uid,
+        'email': email,
+        'name': name,
+        'photoUrl': 'assets/images/avatar_default.png',
+        'favourites': <String>[],
+        'isProfileComplete': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
       if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (_) => false);
+
+      // ✅ Arahkan ke Profile Setup Step 1
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.createUsername,
+        (_) => false,
+      );
     } on FirebaseAuthException catch (e) {
       final msg = switch (e.code) {
         'email-already-in-use' => 'Email sudah terdaftar.',
