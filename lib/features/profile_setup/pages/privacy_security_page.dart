@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/utils/notification_helper.dart';
 
 class PrivacySecurityPage extends StatelessWidget {
   const PrivacySecurityPage({super.key});
@@ -188,12 +187,6 @@ class PrivacySecurityPage extends StatelessWidget {
 
       await user.reauthenticateWithCredential(cred);
       await user.updatePassword(newPass);
-
-      await pushNotif(
-        type: 'password_updated',
-        title: 'Password Update Successful',
-        message: 'Your password has been updated successfully.',
-      );
 
       if (context.mounted) {
         await _showPasswordSuccessDialog(context);

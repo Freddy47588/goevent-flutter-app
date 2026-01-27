@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/utils/notification_helper.dart';
 
 class EditProfilePage extends StatefulWidget {
   final String name;
@@ -60,11 +59,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       }, SetOptions(merge: true));
 
       // ✅ push notif setelah update profil sukses
-      await pushNotif(
-        type: 'profile_updated',
-        title: 'Profile Updated',
-        message: 'Your profile has been updated successfully.',
-      );
 
       if (mounted)
         Navigator.pop(

@@ -30,7 +30,7 @@ class _CreateUsernamePageState extends State<CreateUsernamePage> {
 
     Navigator.pushNamed(
       context,
-      AppRoutes.selectPhoto,
+      AppRoutes.selectFavourite,
       arguments: ProfileSetupState(username: username),
     );
   }

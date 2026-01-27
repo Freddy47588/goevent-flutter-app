@@ -6,6 +6,7 @@ import '../../core/theme/app_radius.dart';
 import '../../core/widgets/gradient_button.dart';
 import '../../routes/app_routes.dart';
 import 'widgets/onboarding_slide.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -36,6 +37,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
     ),
   ];
 
+  Future<void> _finish() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('seen_onboarding', true);
+
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, AppRoutes.login);
+  }
+
   void _next() {
     final last = _slides.length - 1;
     if (_index < last) {
@@ -44,7 +53,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         curve: Curves.easeOut,
       );
     } else {
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      _finish();
     }
   }
 
@@ -111,7 +120,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               // ===== BUTTON NEXT / START =====
               GradientButton(
                 text: _index == _slides.length - 1 ? 'Mulai' : 'Lanjut',
-                onPressed: _next,
+                onPressed: _finish,
               ),
 
               const SizedBox(height: AppSpacing.sm),

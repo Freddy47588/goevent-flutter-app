@@ -8,7 +8,6 @@ import '../../core/theme/app_text_styles.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/widgets/gradient_button.dart';
 import '../../routes/app_routes.dart';
-import '../../../core/utils/notification_helper.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
