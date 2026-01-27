@@ -168,11 +168,7 @@ class _SignupPageState extends State<SignupPage> {
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             children: [
-              Image.asset(
-                'assets/images/logo_splash.png',
-                width: 70,
-                height: 70,
-              ),
+              Image.asset('assets/images/logo.png', width: 70, height: 70),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'Buat Akun',
