@@ -48,34 +48,55 @@ class _TicketsPageState extends State<TicketsPage> {
   Widget build(BuildContext context) {
     final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final textPrimary = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final textSecondary = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    // Brand accent GoEvent (biar tetap “biru GoEvent” di dark juga)
+    final brand = AppColors.lightPrimary;
+
     return Scaffold(
+      backgroundColor: bg,
       appBar: AppBar(
+        backgroundColor: bg,
+        elevation: 0,
         centerTitle: true,
         title: Text(
           'All Tickets',
           style: AppTextStyles.h3.copyWith(
-            color: Colors.black,
+            color: textPrimary,
             fontWeight: FontWeight.w900,
           ),
         ),
       ),
       body: userId.isEmpty
-          ? const _EmptyState(
+          ? _EmptyState(
               title: 'Belum Login',
               subtitle: 'Silakan login dulu untuk melihat tiket kamu.',
               icon: Icons.lock_outline,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
             )
           : StreamBuilder<List<OrderModel>>(
               stream: OrdersService.instance.watchOrdersByUser(userId),
               builder: (context, snap) {
                 if (snap.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Center(child: CircularProgressIndicator(color: brand));
                 }
                 if (snap.hasError) {
                   return _EmptyState(
                     title: 'Gagal memuat data',
                     subtitle: snap.error.toString(),
                     icon: Icons.error_outline,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
                   );
                 }
 
@@ -88,14 +109,20 @@ class _TicketsPageState extends State<TicketsPage> {
                     _TicketSegmented(
                       value: _tab,
                       onChanged: (v) => setState(() => _tab = v),
+                      surface: surface,
+                      border: border,
+                      brand: brand,
+                      textSecondary: textSecondary,
                     ),
                     const SizedBox(height: 12),
                     Expanded(
                       child: items.isEmpty
-                          ? const _EmptyState(
+                          ? _EmptyState(
                               title: 'Kosong',
                               subtitle: 'Belum ada tiket di tab ini.',
                               icon: Icons.confirmation_num_outlined,
+                              textPrimary: textPrimary,
+                              textSecondary: textSecondary,
                             )
                           : ListView.separated(
                               padding: const EdgeInsets.symmetric(
@@ -111,6 +138,12 @@ class _TicketsPageState extends State<TicketsPage> {
                                 return _TicketCardFinal(
                                   tab: _tab,
                                   order: o,
+                                  isDark: isDark,
+                                  surface: surface,
+                                  border: border,
+                                  brand: brand,
+                                  textPrimary: textPrimary,
+                                  textSecondary: textSecondary,
 
                                   // Upcoming
                                   onCancelBooking: () async {
@@ -123,7 +156,6 @@ class _TicketsPageState extends State<TicketsPage> {
                                     );
 
                                     if (ok == true && mounted) {
-                                      // pindah ke Cancelled biar sesuai UX
                                       setState(
                                         () => _tab = TicketTab.cancelled,
                                       );
@@ -176,7 +208,19 @@ class _TicketSegmented extends StatelessWidget {
   final TicketTab value;
   final ValueChanged<TicketTab> onChanged;
 
-  const _TicketSegmented({required this.value, required this.onChanged});
+  final Color surface;
+  final Color border;
+  final Color brand;
+  final Color textSecondary;
+
+  const _TicketSegmented({
+    required this.value,
+    required this.onChanged,
+    required this.surface,
+    required this.border,
+    required this.brand,
+    required this.textSecondary,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -186,18 +230,18 @@ class _TicketSegmented extends StatelessWidget {
         child: GestureDetector(
           onTap: () => onChanged(v),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: const Duration(milliseconds: 180),
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: selected ? AppColors.lightPrimary : Colors.transparent,
+              color: selected ? brand : Colors.transparent,
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
               text,
               textAlign: TextAlign.center,
               style: AppTextStyles.body.copyWith(
-                color: selected ? Colors.white : Colors.black87,
-                fontWeight: FontWeight.w700,
+                color: selected ? Colors.white : textSecondary,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
@@ -209,8 +253,9 @@ class _TicketSegmented extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F2),
+        color: surface,
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: border),
       ),
       child: Row(
         children: [
@@ -227,6 +272,13 @@ class _TicketCardFinal extends StatelessWidget {
   final TicketTab tab;
   final OrderModel order;
 
+  final bool isDark;
+  final Color surface;
+  final Color border;
+  final Color brand;
+  final Color textPrimary;
+  final Color textSecondary;
+
   final VoidCallback onCancelBooking;
   final VoidCallback onViewTicket;
   final VoidCallback onEventDetail;
@@ -235,6 +287,12 @@ class _TicketCardFinal extends StatelessWidget {
   const _TicketCardFinal({
     required this.tab,
     required this.order,
+    required this.isDark,
+    required this.surface,
+    required this.border,
+    required this.brand,
+    required this.textPrimary,
+    required this.textSecondary,
     required this.onCancelBooking,
     required this.onViewTicket,
     required this.onEventDetail,
@@ -255,16 +313,39 @@ class _TicketCardFinal extends StatelessWidget {
       TicketTab.cancelled => _StatusChip.cancelled(),
     };
 
+    final outlineStyle = OutlinedButton.styleFrom(
+      foregroundColor: brand,
+      side: BorderSide(color: border, width: 1.4),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    );
+
+    final outlineNeutralStyle = OutlinedButton.styleFrom(
+      foregroundColor: textPrimary,
+      side: BorderSide(color: border, width: 1.4),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    );
+
+    final elevatedStyle = ElevatedButton.styleFrom(
+      backgroundColor: brand,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 0,
+    );
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: const [
+        border: Border.all(color: border),
+        boxShadow: [
           BoxShadow(
             blurRadius: 18,
-            offset: Offset(0, 8),
-            color: Color(0x12000000),
+            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(isDark ? 0.22 : 0.08),
           ),
         ],
       ),
@@ -283,8 +364,11 @@ class _TicketCardFinal extends StatelessWidget {
                     width: 62,
                     height: 62,
                     alignment: Alignment.center,
-                    color: const Color(0xFFEDEDED),
-                    child: const Icon(Icons.image_not_supported_outlined),
+                    color: border.withOpacity(0.35),
+                    child: Icon(
+                      Icons.image_not_supported_outlined,
+                      color: textSecondary,
+                    ),
                   ),
                 ),
               ),
@@ -298,16 +382,17 @@ class _TicketCardFinal extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.body.copyWith(
+                        color: textPrimary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.location_on_outlined,
                           size: 16,
-                          color: Colors.black54,
+                          color: textSecondary,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
@@ -316,7 +401,7 @@ class _TicketCardFinal extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: AppTextStyles.caption.copyWith(
-                              color: Colors.black54,
+                              color: textSecondary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -332,19 +417,14 @@ class _TicketCardFinal extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // ===== Buttons per tab (FINAL sesuai screenshot) =====
+          // ===== Buttons per tab (layout tetap) =====
           if (tab == TicketTab.upcoming) ...[
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
                     onPressed: onCancelBooking,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                    style: outlineNeutralStyle,
                     child: const Text('Cancel Booking'),
                   ),
                 ),
@@ -352,14 +432,7 @@ class _TicketCardFinal extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: onViewTicket,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.lightPrimary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                    style: elevatedStyle,
                     child: const Text('View Ticket'),
                   ),
                 ),
@@ -371,18 +444,11 @@ class _TicketCardFinal extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: onEventDetail,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                    style: outlineStyle,
                     child: const Text('Event Detail'),
                   ),
                 ),
                 const SizedBox(width: 10),
-
-                // ✅ Disable kalau sudah review
                 Expanded(
                   child: FutureBuilder<bool>(
                     future: FirebaseFirestore.instance
@@ -398,14 +464,13 @@ class _TicketCardFinal extends StatelessWidget {
                       return ElevatedButton(
                         onPressed: alreadyReviewed ? null : onReview,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: alreadyReviewed
-                              ? Colors.grey.shade400
-                              : AppColors.lightPrimary,
+                          backgroundColor: alreadyReviewed ? border : brand,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          elevation: 0,
                         ),
                         child: Text(
                           alreadyReviewed ? 'Reviewed' : 'Write a Review',
@@ -418,17 +483,11 @@ class _TicketCardFinal extends StatelessWidget {
               ],
             ),
           ] else ...[
-            // Cancelled: 1 tombol full width
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: onEventDetail,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                style: outlineStyle,
                 child: const Text('Event Detail'),
               ),
             ),
@@ -441,37 +500,24 @@ class _TicketCardFinal extends StatelessWidget {
 
 class _StatusChip extends StatelessWidget {
   final String text;
-  final Color bg;
-  final Color fg;
+  final Color base;
 
-  const _StatusChip({required this.text, required this.bg, required this.fg});
+  const _StatusChip({required this.text, required this.base});
 
-  factory _StatusChip.paid() {
-    return _StatusChip(
-      text: 'Paid',
-      bg: const Color(0xFFFFE6F2),
-      fg: const Color(0xFFFF2DAA),
-    );
-  }
+  factory _StatusChip.paid() =>
+      const _StatusChip(text: 'Paid', base: Color(0xFFFF2DAA));
 
-  factory _StatusChip.completed() {
-    return _StatusChip(
-      text: 'Completed',
-      bg: const Color(0xFFE8F7EA),
-      fg: const Color(0xFF2E7D32),
-    );
-  }
+  factory _StatusChip.completed() =>
+      const _StatusChip(text: 'Completed', base: Color(0xFF2E7D32));
 
-  factory _StatusChip.cancelled() {
-    return _StatusChip(
-      text: 'Cancelled',
-      bg: const Color(0xFFFFE6EC),
-      fg: const Color(0xFFD81B60),
-    );
-  }
+  factory _StatusChip.cancelled() =>
+      const _StatusChip(text: 'Cancelled', base: Color(0xFFD81B60));
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = base.withOpacity(isDark ? 0.22 : 0.12);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -481,7 +527,7 @@ class _StatusChip extends StatelessWidget {
       child: Text(
         text,
         style: AppTextStyles.caption.copyWith(
-          color: fg,
+          color: base,
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -494,16 +540,15 @@ class _EmptyState extends StatelessWidget {
   final String subtitle;
   final IconData icon;
 
+  final Color textPrimary;
+  final Color textSecondary;
+
   const _EmptyState({
     required this.title,
     required this.subtitle,
     required this.icon,
-  });
-
-  const _EmptyState.icon({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
+    required this.textPrimary,
+    required this.textSecondary,
   });
 
   @override
@@ -514,14 +559,23 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 52, color: Colors.black38),
+            Icon(icon, size: 52, color: textSecondary),
             const SizedBox(height: 12),
-            Text(title, style: AppTextStyles.h3),
+            Text(
+              title,
+              style: AppTextStyles.h3.copyWith(
+                color: textPrimary,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
             const SizedBox(height: 8),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: AppTextStyles.body.copyWith(color: Colors.black54),
+              style: AppTextStyles.body.copyWith(
+                color: textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),

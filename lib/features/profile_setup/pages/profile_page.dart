@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../services/profile_service.dart';
 import 'edit_profile_page.dart';
 import 'settings_sheet.dart';
 

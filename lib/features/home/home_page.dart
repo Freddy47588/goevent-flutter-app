@@ -213,7 +213,7 @@ class _HomeTab extends StatelessWidget {
 
     final locationLabel = (userLoc == null)
         ? 'Getting location...'
-        : '${userLoc!.city}';
+        : userLoc!.city;
 
     final locationLine = (userLoc == null)
         ? 'Location'
@@ -1388,7 +1388,7 @@ class _HomeFilterSheetState extends State<_HomeFilterSheet> {
           SwitchListTile(
             value: f.onlyTickets,
             onChanged: (v) => setState(() => f = f.copyWith(onlyTickets: v)),
-            activeColor: brand,
+            activeThumbColor: brand,
             title: Text(
               'Only ticket available',
               style: AppTextStyles.body.copyWith(
@@ -1405,7 +1405,7 @@ class _HomeFilterSheetState extends State<_HomeFilterSheet> {
           SwitchListTile(
             value: f.nearMe,
             onChanged: (v) => setState(() => f = f.copyWith(nearMe: v)),
-            activeColor: brand,
+            activeThumbColor: brand,
             title: Text(
               'Near me',
               style: AppTextStyles.body.copyWith(

@@ -60,11 +60,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       // ✅ push notif setelah update profil sukses
 
-      if (mounted)
+      if (mounted) {
         Navigator.pop(
           context,
           true,
         ); // opsional: return true biar page sebelumnya bisa refresh
+      }
 
       if (mounted) Navigator.pop(context);
     } catch (e) {

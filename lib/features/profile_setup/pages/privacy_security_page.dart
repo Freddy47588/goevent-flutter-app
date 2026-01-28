@@ -358,7 +358,7 @@ class PrivacySecurityPage extends StatelessWidget {
       password = ok == true ? passC.text.trim() : null;
       passC.dispose();
 
-      if (password == null || password!.isEmpty) return;
+      if (password == null || password.isEmpty) return;
     }
 
     // 4) Loading (gunakan rootNavigator)

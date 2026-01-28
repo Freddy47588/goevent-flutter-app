@@ -145,6 +145,21 @@ class SettingsSheet extends StatelessWidget {
               },
             ),
 
+            // ===== View Onboarding =====
+            _SettingTile(
+              icon: Icons.slideshow,
+              title: 'View Onboarding',
+              subtitle: 'See the intro screens again',
+              iconColor: brand,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              divider: divider,
+              onTap: () {
+                Navigator.pop(context); // tutup bottom sheet dulu
+                Navigator.pushNamed(context, AppRoutes.onboarding);
+              },
+            ),
+
             // ===== About GoEvent =====
             _SettingTile(
               icon: Icons.info_outline,

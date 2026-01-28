@@ -261,7 +261,7 @@ class _SearchFilterSheetState extends State<SearchFilterSheet> {
                   value: f.onlyTickets,
                   onChanged: (v) =>
                       setState(() => f = f.copyWith(onlyTickets: v)),
-                  activeColor: brand,
+                  activeThumbColor: brand,
                   title: Text(
                     'Only ticket available',
                     style: AppTextStyles.body.copyWith(
@@ -278,7 +278,7 @@ class _SearchFilterSheetState extends State<SearchFilterSheet> {
                 SwitchListTile(
                   value: f.nearMe,
                   onChanged: (v) => setState(() => f = f.copyWith(nearMe: v)),
-                  activeColor: brand,
+                  activeThumbColor: brand,
                   title: Text(
                     'Near me',
                     style: AppTextStyles.body.copyWith(

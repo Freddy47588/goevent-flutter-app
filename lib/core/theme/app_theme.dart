@@ -9,7 +9,6 @@ class AppTheme {
     colorScheme: ColorScheme.light(
       primary: AppColors.lightPrimary,
       secondary: AppColors.lightSecondary,
-      background: AppColors.lightBackground,
       surface: AppColors.lightSurface,
     ),
     fontFamily:
@@ -23,7 +22,6 @@ class AppTheme {
     colorScheme: ColorScheme.dark(
       primary: AppColors.darkPrimary,
       secondary: AppColors.darkSecondary,
-      background: AppColors.darkBackground,
       surface: AppColors.darkSurface,
     ),
     fontFamily: 'Poppins',

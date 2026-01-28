@@ -180,10 +180,12 @@ class _EventTile extends StatelessWidget {
   }
 
   Widget _img(String pathOrUrl, Color brand, bool isDark) {
-    if (pathOrUrl.startsWith('http'))
+    if (pathOrUrl.startsWith('http')) {
       return Image.network(pathOrUrl, fit: BoxFit.cover);
-    if (pathOrUrl.isEmpty)
+    }
+    if (pathOrUrl.isEmpty) {
       return Container(color: brand.withOpacity(isDark ? 0.22 : 0.14));
+    }
     return Image.asset(pathOrUrl, fit: BoxFit.cover);
   }
 }

@@ -41,7 +41,7 @@ class OrderModel {
   factory OrderModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? {};
 
-    DateTime _toDt(dynamic v) {
+    DateTime toDt(dynamic v) {
       if (v == null) return DateTime.fromMillisecondsSinceEpoch(0);
       if (v is Timestamp) return v.toDate();
       if (v is DateTime) return v;
@@ -49,7 +49,7 @@ class OrderModel {
           DateTime.fromMillisecondsSinceEpoch(0);
     }
 
-    int _toInt(dynamic v) {
+    int toInt(dynamic v) {
       if (v == null) return 0;
       if (v is int) return v;
       if (v is double) return v.toInt();
@@ -58,17 +58,17 @@ class OrderModel {
 
     return OrderModel(
       id: doc.id,
-      createdAt: _toDt(d['createdAt']),
+      createdAt: toDt(d['createdAt']),
       eventId: (d['eventId'] ?? '').toString(),
       eventTitle: (d['eventTitle'] ?? '').toString(),
       locationName: (d['locationName'] ?? '').toString(),
       eventImage: (d['eventImage'] ?? '').toString(),
-      eventStartAt: _toDt(d['eventStartAt']),
-      qty: _toInt(d['qty']),
-      fees: _toInt(d['fees']),
-      ticketPrice: _toInt(d['ticketPrice']),
-      subtotal: _toInt(d['subtotal']),
-      total: _toInt(d['total']),
+      eventStartAt: toDt(d['eventStartAt']),
+      qty: toInt(d['qty']),
+      fees: toInt(d['fees']),
+      ticketPrice: toInt(d['ticketPrice']),
+      subtotal: toInt(d['subtotal']),
+      total: toInt(d['total']),
       paymentMethod: (d['paymentMethod'] ?? '').toString(),
       status: (d['status'] ?? '').toString(),
       userId: (d['userId'] ?? '').toString(),
