@@ -127,7 +127,9 @@ class ProfilePage extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       about,
-                      style: AppTextStyles.body.copyWith(color: Colors.black87),
+                      style: AppTextStyles.body.copyWith(
+                        color: Theme.of(context).colorScheme.onBackground,
+                      ),
                     ),
                   ],
                 );

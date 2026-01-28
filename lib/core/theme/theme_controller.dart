@@ -47,9 +47,14 @@ class ThemeController {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    await FirebaseFirestore.instance.collection('users').doc(uid).set({
-      'themeMode': _modeToString(mode),
-    }, SetOptions(merge: true));
+    // FIX: Gunakan update() dengan merge: true agar tidak menimpa data lain
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .set(
+          {'themeMode': _modeToString(mode)},
+          SetOptions(merge: true),
+        );
   }
 
   String _modeToString(ThemeMode m) {
