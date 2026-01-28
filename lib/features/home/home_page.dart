@@ -23,8 +23,6 @@ import '../favourites/pages/favourite_page.dart';
 
 import '../tickets/pages/tickets_page.dart';
 
-import '../profile_setup/pages/profile_page.dart';
-
 import '../../routes/app_routes.dart'; // sesuaikan path file kamu
 
 class HomePage extends StatefulWidget {
